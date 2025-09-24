@@ -8,6 +8,7 @@
 #include <GPIO_devicedriver.h>
 #include <stdint.h>
 
+
 void GPIO_init(uint32_t port)
 {
 	Rcc_reg->AHB1ENR |= (1 << port);

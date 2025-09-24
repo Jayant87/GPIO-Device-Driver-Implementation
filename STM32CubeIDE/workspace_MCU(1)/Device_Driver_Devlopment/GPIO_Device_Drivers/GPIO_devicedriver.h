@@ -38,7 +38,7 @@ typedef struct GPIO_Function_Reg
 
 void GPIO_init(uint32_t port);
 void GPIO_config_pin(uint8_t pin, uint32_t port, uint8_t speed, uint8_t mode, uint8_t type, uint8_t pupd);
-void GPIO_config_port(uint8_t speed, uint32_t port, uint8_t mode, uint8_t type, uint8_t pupd);
+void GPIO_config_port(uint8_t speed, uint32_t port, uint8_t mode, uint8_t type, uint8_t pupd); // @config for more
 void GPIO_output_pin(uint8_t pin, uint32_t port, uint8_t data);
 void GPIO_output_port(uint32_t port , uint32_t data);
 uint8_t GPIO_input_pin(uint8_t pin, uint32_t port);
@@ -53,6 +53,7 @@ enum{
 };
 /*
  *  Parameters for Configuring GPIO speed mode type pupd
+ *  @config
  */
 enum{
 	Input,Output,Alternate,Analog, push_pull = 0, open_drain = 1,

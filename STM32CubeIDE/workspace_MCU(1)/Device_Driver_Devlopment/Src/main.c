@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <GPIO_devicedriver.h>
 
+//#include <STM32F401RE.h>
+
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
@@ -27,9 +29,11 @@
  * Rs - PC10, En - PC12, DB0 - PC14 err
  * DB1 - PC15 err, DB2 - PC2, DB3 - PC3
  * DB4 - PA5, DB5 - PA6, DB6 - PB12
- * DB7 - PA3 err, EXTI - PA8
+ * DB7 - PA3 err, EXTI - PC13
  */
-
+#define SYSCONFIG_ENR (0x40023800 + 0x44)
+#define INTERRUPT_BASE_EXTI 0x40013C00U
+#define Sys_Config_Base 0x40013800U
 void data(uint8_t var);
 void cmd(uint8_t var);
 void write(uint8_t);
@@ -54,6 +58,19 @@ int main(void)
     GPIO_config_pin(6,  GPIO_A, high_speed, Output, push_pull, No_pupd); // DB5
     GPIO_config_pin(12, GPIO_B, high_speed, Output, push_pull, No_pupd); // DB6
     GPIO_config_pin(1,  GPIO_C, high_speed, Output, push_pull, No_pupd); // DB7
+
+    GPIO_config_pin(13, GPIO_C, high_speed, Input, push_pull, No_pupd); //EXTI
+    uint32_t *RCC_APB2ENR = (uint32_t*)(SYSCONFIG_ENR);
+    *RCC_APB2ENR |= (1 << 14);
+    uint32_t *EXTI_sysconfig4 = (uint32_t*)(Sys_Config_Base + 0x14);
+    *EXTI_sysconfig4 |= (2 << 4);
+    uint32_t *IMR = (uint32_t*)INTERRUPT_BASE_EXTI;
+    *IMR |= (1 << 13);
+    uint32_t *Rising_edge = (uint32_t*)(INTERRUPT_BASE_EXTI + 0x08);
+    *Rising_edge |= (1 << 13);
+    uint32_t *NVIC_Enable = (uint32_t*)(0xE000E100 + 0x04);
+    *NVIC_Enable |= (1 << 8);
+    //GPIO_alternate_func(GPIO_C, 8, )
 
     /* Small power-on delay */
     for(volatile int i = 0; i < 50000; i++);
@@ -82,7 +99,19 @@ int main(void)
         for(volatile int i = 0; i < 1000000; i++); // pause before repeating
     }
 }
-
+void EXTI15_10_IRQHandler(void)
+{
+	cmd(0x01);
+	for(int i = 0; i < 45; i++)
+	{
+		  char *name = "INTERRUPT";
+		        while (*name) {
+		            data(*name++);
+		            for(volatile int i = 0; i < 50000; i++); // ~40us delay
+		        }
+		        for(volatile int i = 0; i < 1000000; i++); // pause before repeating
+	}
+}
 /* Send 8-bit data to LCD */
 void write(uint8_t var)
 {
